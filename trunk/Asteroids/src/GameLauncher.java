@@ -49,7 +49,13 @@ public class GameLauncher {
 
   //Asteroid object
   public class Asteroid extends JPanel {
-    public void paintComponent(Graphics g) {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public void paintComponent(Graphics g) {
       //set background color
       g.setColor(Color.BLACK);
       g.fillRect(0,0,gameFrame.getWidth(),gameFrame.getHeight());
