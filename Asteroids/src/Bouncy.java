@@ -24,7 +24,7 @@ public class Bouncy {
   
   public void buildGui() {
     //set frame parameters
-    frame.setBounds(400,10,1000,1000);
+    frame.setBounds(400,10,1000,800);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.setResizable(false);
     frame.setVisible(true);
