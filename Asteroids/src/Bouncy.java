@@ -1,20 +1,20 @@
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.Timer;
 
 
 public class Bouncy {
   JFrame frame = new JFrame();
   GamePanel gamePanel;
   private List<Asteroid> asteroids;
-
   
-  Timer moveAsteroid = new Timer(10, new MotionListener()); //controls motion of the asteroid
+
   
   public static void main(String[] args){
     //Create a new game
@@ -33,13 +33,19 @@ public class Bouncy {
     gamePanel.setBackground(Color.BLACK);
     frame.getContentPane().add(gamePanel, BorderLayout.CENTER);
     
-    moveAsteroid.start();
   }//end buildGui();
   
   
   //create GamePanel and add asteroid objects to it
   public class GamePanel extends JPanel{
-    public GamePanel() {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4709680644442332656L;
+
+
+
+	public GamePanel() {
       super();
       asteroids = new ArrayList<Asteroid>();
       //need to change to a for loop with rand() to add multiple asteroids
@@ -49,7 +55,13 @@ public class Bouncy {
           int size = (int)(Math.random() * 100) + 50;
           asteroids.add(new Asteroid(startX, startY, size));
       }
+      
+      //kicks off asteroid animation and controls speed
+      Timer moveAsteroid = new Timer(); 
+      moveAsteroid.scheduleAtFixedRate(new MotionListener(), 100, 25);
     }//end GamePanel constructor
+    
+    
   
     public void paintComponent(Graphics g) {
       super.paintComponent(g); //this allows me to have a black background.  Not sure why though...
@@ -77,16 +89,33 @@ public class Bouncy {
     int hVelocity = (int)(Math.random() * 5) + 1; //horizontal velocity
     int vVelocity = (int)(Math.random() * 5) + 1; //vertical verlocity
     
+    //used randomize starting direction
+    int hDirection = (int)(Math.random() * 2);
+    int vDirection = (int)(Math.random() * 2);
+
+    
+    
+    
     //constructor
     public Asteroid(int x, int y, int s) {
       startX = x;
       startY = y;
       size = s;
+      
+      //randomize horizontal direction
+      if (hDirection == 1) {
+      	hVelocity *= (-1);
+      }
+      
+      //randomize vertical direction
+      if (vDirection == 1) {
+        	vVelocity *= (-1);
+        }
     }
   }
   
-  public class MotionListener implements ActionListener {
-      public void actionPerformed(ActionEvent ev){
+  public class MotionListener extends TimerTask {
+      public void run(){
           //use loop to check for boundaries, and when encountered turn asteroid around.
           for (int i = 0 ; i < asteroids.size() ; i++) {
             if((gamePanel.getWidth() - asteroids.get(i).size) <= asteroids.get(i).startX || asteroids.get(i).startX <= 0) {
@@ -97,9 +126,10 @@ public class Bouncy {
                 asteroids.get(i).vVelocity *= (-1);
             }
             
-            //increment coordinate positiong by object velocity
+            //increment coordinate positioning by object velocity
             asteroids.get(i).startX += asteroids.get(i).hVelocity;
             asteroids.get(i).startY += asteroids.get(i).vVelocity;
+            
           }
           
           frame.repaint();
