@@ -59,8 +59,22 @@ public class Asteroid {
 		return diameter;
 	}
 	
+	public void updateVelocity(double x, double y) {
+		hVelocity = (int) x;
+		vVelocity = (int) y;
+	}
+	
+	public void updatePos (double newX, double newY) {
+		startX = (int) newX;
+		startY = (int) newY;
+	}
+	
 	public Point2D getCenter() {
 		return new Point2D.Double(startX + (diameter/2), startY + (diameter/2));
+	}
+	
+	public Vector2D velVector() {
+		return new Vector2D(this.hVelocity, this.vVelocity);
 	}
 	
 	public double getRadius() {
