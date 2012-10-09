@@ -1,155 +1,178 @@
 package asteroids;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.applet.*;
 
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.geom.Point2D;
-
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import javax.swing.JPanel;
+@SuppressWarnings("serial")
+public class Game extends Applet implements Runnable, KeyListener {
+	
+	//timing variables
+	Thread thread;
+	long startTime, endTime, framePeriod;
+	
+	//graphics variables
+	Image img;
+	Dimension dim;
+	Graphics g;
+	
+	SpaceShip ship;
+	ArrayList<Asteroid> asteroids = new ArrayList<Asteroid>();
+	int numOfAsteroids = 8;
+	//ArrayList to hold the lasers
+	ArrayList<Laser> lasers = new ArrayList<Laser>();
+	final double rateOfFire = 10; //limits rate of fire
+	double rateOfFireRemaining; //decrements rate of fire 
+	
+	public void init() {
+		resize(900,700); //set size of the applet
+		framePeriod = 25; //set refresh rate
+		
+		addKeyListener(this); //to get commands from keyboard
+		setFocusable(true); 
+		
+		ship = new SpaceShip(450, 350, 0, .15, .5, .15, .98); //add ship to game
+		addAsteroids();
+		
 
-public class Game extends JPanel {
-	private static final long serialVersionUID = 1L;
-	
-	private Timer timer;
-	private ArrayList<Asteroid> asteroids;
-	private int numOfAsteroids = 5;
-	
-	public Game() {
 		
-		setBackground(Color.BLACK);
-		setDoubleBuffered(true);
-		
-		//create a bunch of asteroid objects and add them to the asteroids ArrayList
-		asteroids = new ArrayList<Asteroid>();
-		
-		for(int i = 0 ; i < numOfAsteroids ; i++) {
-			asteroids.add(new Asteroid());
-			System.out.println("made asteroid " + i + " at location x: " + asteroids.get(i).startX + " y: " + asteroids.get(i).startY + " and diameter: " + asteroids.get(i).diameter);
-			
-			if(i > 0) {
-				for(int j = i ; j-i != i ; j++) {
-					//first asteroid
-					Asteroid a = asteroids.get(j-i);
-					Point2D aCenter = a.getCenter();
-					//second asteroid
-					Asteroid b = asteroids.get(i);
-					Point2D bCenter = b.getCenter();
-				
-					double distanceBetween = aCenter.distance(bCenter);
-					if(distanceBetween < (a.getRadius() + b.getRadius())) {
-						asteroids.remove(i);
-						System.out.println("Asteroid " + i + " intersects with asteroid " + (j-i));
-						System.out.println("Removing asteroid " + i);
-						i--;
-						j=((i*2)-1);
-					}
-				}
-			}
-		}
-		
-		timer = new Timer();
-		timer.scheduleAtFixedRate(new MotionListener(), 100, 20);
+		dim = getSize(); //get dimension of the applet
+		img = createImage(dim.width, dim.height); //create an off-screen image for double-buffering
+		g = img.getGraphics(); //assign the off-screen image
+		thread = new Thread(this);
+		thread.start();
 	}
 	
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
+	public void paint(Graphics gfx) {
 		Graphics2D g2d = (Graphics2D) g;
-		
         //give the graphics smooth edges
         RenderingHints rh = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         rh.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2d.setRenderingHints(rh);
         
-        //use loop to iterated through asteroids ArrayList, adding each object to the JPanel in turn
-        for (Asteroid a :  asteroids) {
-          g2d.setColor(Color.RED);
-          g2d.fillOval(a.getX(), a.getY(), a.getDiameter(), a.getDiameter());
+        g2d.setColor(Color.BLACK);
+        g2d.fillRect(0, 0, 900, 700); //add a black background
+        for(Asteroid a: asteroids) { //draw asteroids
+        	a.draw(g2d);
         }
         
-        repaint();
+        for(Laser l : lasers) { //draw lasers
+        	l.draw(g2d);
+        }
+        
+        ship.draw(g2d); //draw ship
+        
+        gfx.drawImage(img, 0, 0, this); //draw the off-screen image (double-buffering) onto the applet
 	}
 	
-	public class MotionListener extends TimerTask {
-		public void run() {
-			for(int i = 0 ; i < asteroids.size() ; i++) {
-				asteroids.get(i).move();
-				collisions();
+	public void update(Graphics gfx) {
+		paint(gfx); //gets rid of white flickering
+	}
+	
+	public void run() {
+		for( ; ; ) {
+			startTime = System.currentTimeMillis(); //timestamp
+			ship.move(dim.width, dim.height);
+			for(Asteroid a : asteroids) {
+				a.move(dim.width, dim.height);
 			}
+			for(Laser l : lasers) {
+				l.move(dim.width, dim.height);
+			}
+			for(int i = 0 ; i<lasers.size() ; i++) {
+				if(!lasers.get(i).getActive())
+					lasers.remove(i);
+			}
+			rateOfFireRemaining--;
+			collisionCheck();
+			if(asteroids.size() == 0)
+				addAsteroids();
+			repaint();
+			try {
+				endTime = System.currentTimeMillis(); //new timestamp
+				if(framePeriod - (endTime-startTime) > 0) 				//if there is time left over after repaint, then sleep 
+					Thread.sleep(framePeriod - (endTime - startTime)); 	//for whatever is  remaining in framePeriod
+			} catch(InterruptedException e) {}
 		}
 	}
 	
-	public void collisions() {
-		//get boundary for the first asteroid
-		for(int i = 0 ; i < asteroids.size(); i++) {
-			Asteroid a1 = asteroids.get(i);
-			Point2D a1Center = a1.getCenter();
+	public void keyPressed(KeyEvent e) {
+		int key = e.getKeyCode();
+		//fires laser
+		if(key == KeyEvent.VK_SPACE) {
+			if(rateOfFireRemaining <= 0 ) {
+				lasers.add(ship.fire());
+				rateOfFireRemaining = rateOfFire;
+			}
+		}
+		if(key == KeyEvent.VK_UP) 
+			ship.setAccelerating(true);
+		if(key == KeyEvent.VK_RIGHT)
+			ship.setTurningRight(true);
+		if(key == KeyEvent.VK_LEFT)
+			ship.setTurningLeft(true);
+		if(key == KeyEvent.VK_DOWN)
+			ship.setDecelerating(true);
+	}
+	
+	public void keyReleased(KeyEvent e) {
+		int key = e.getKeyCode();
+		if(key == KeyEvent.VK_UP) 
+			ship.setAccelerating(false);
+		if(key == KeyEvent.VK_RIGHT)
+			ship.setTurningRight(false);
+		if(key == KeyEvent.VK_LEFT)
+			ship.setTurningLeft(false);
+		if(key == KeyEvent.VK_DOWN)
+			ship.setDecelerating(false);
+	}
+	
+	public void keyTyped(KeyEvent e) {
+		
+	}
+	
+	public void addAsteroids() {
+		for(int i=0 ; i<numOfAsteroids ; i++) {		//add asteroids to game
+			//randomize starting position
+			int asteroidX = (int)(Math.random() * 900) + 1;
+			int asteroidY = (int)(Math.random() * 700) + 1;
+			//randomize speed and direction
+			int xVelocity = (int)(Math.random() * 3) + 1; //horizontal velocity
+		    int yVelocity = (int)(Math.random() * 3) + 1; //vertical velocity
+		    //used randomize starting direction
+		    int xDirection = (int)(Math.random() * 2);
+		    int yDirection = (int)(Math.random() * 2);
+		    	//randomize horizontal direction
+		      	if (xDirection == 1)
+		      		xVelocity *= (-1);
+		      	//randomize vertical direction
+		      	if (yDirection == 1)
+		      		yVelocity *= (-1);
+			asteroids.add(new Asteroid(asteroidX, asteroidY, 0, .1, xVelocity, yVelocity));
+		}
+	}
+	
+	public void collisionCheck() {
+		//check for collisions between lasers and asteroids
+		for(int i = 0 ; i < asteroids.size() ; i++) {
+			Asteroid a = asteroids.get(i);
+			Point2D aCenter = a.getCenter();
 			
-			//check against boundaries of all the other asteroids
-			for(int j = i + 1 ; j < asteroids.size(); j++) {
+			for(int j = 0 ; j < lasers.size() ; j++) {
+				Laser l = lasers.get(j);
+				Point2D lCenter = l.getCenter();
 				
-				Asteroid a2 = asteroids.get(j);
-				Point2D a2Center = a2.getCenter();
-				
-				double distanceBetween = a1Center.distance(a2Center);
-				if(distanceBetween <= (a1.getRadius() + a2.getRadius())) {
-					a1.hVelocity *= -1;
-					a1.vVelocity *= -1;
-					a2.hVelocity *= -1;
-					a2.vVelocity *= -1;
-					
+				double distanceBetween = aCenter.distance(lCenter);
+				if(distanceBetween <= (a.getRadius() + l.getRadius())) {
+					asteroids.remove(i);
+					lasers.remove(j);
 				}
 			}
 		}
 	}
 	
-	public void collide(Asteroid a1, Asteroid a2, double distanceBetween) {
-		//set variables for the relative distances between the x & y coordinates of the asteroids
-		double relX = a1.getX() - a2.getX();
-		double relY = a1.getY() - a2.getY();
-		
-		//Take the arctan to find the collision angle
-		double collisionAngle = Math.atan2(relY, relX);
-		// if (collisionAngle < 0) collisionAngle += 2 * Math.PI;
-		// Rotate the coordinate systems for each object's velocity to align
-		// with the collision angle. We do this by supplying the collision angle
-		// to the vector's rotateCoordinates method.
-		Vector2D a1Vel = a1.velVector(), a2Vel = a2.velVector();
-		a1Vel.rotateCoordinates(collisionAngle);
-		a2Vel.rotateCoordinates(collisionAngle);
-		
-		// In the collision coordinate system, the contact normals lie on the
-		// x-axis. Only the velocity values along this axis are affected. We can
-		// now apply a simple 1D momentum equation where the new x-velocity of
-		// the first object equals a negative times the x-velocity of the
-		// second.
-		double swap = a1Vel.x;
-		a1Vel.x = a2Vel.x;
-		a2Vel.x = swap;
-		
-		//Now we need to get the vectors back into normal coordinate space
-		a1Vel.restoreCoordinates();
-		a2Vel.restoreCoordinates();
-		
-		//Give each object its new velocity
-		a1.updateVelocity(a1Vel.x, a1Vel.y);
-		a2.updateVelocity(a2Vel.x, a2Vel.y);
-		
-		//Back them up in the opposite angle so they are not overlapping
-		double minDist = a1.getRadius() + a2.getRadius();
-		double overlap = minDist - distanceBetween;
-		double toMove = overlap / 2;
-		double newX = a1.getX() - (toMove * Math.cos(collisionAngle));
-		double newY = a1.getY() - (toMove * Math.cos(collisionAngle));
-		a1.updatePos(newX, newY);
-		newX = a2.getX() - (toMove * Math.cos(collisionAngle));
-		newY = a2.getY() - (toMove * Math.cos(collisionAngle));
-		a2.updatePos(newX, newY);
-		
-	}
+	
 }
