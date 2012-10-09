@@ -1,83 +1,77 @@
 package asteroids;
 
+import java.awt.*;
 import java.awt.geom.Point2D;
 
 public class Asteroid {
-    int startX;		//starting x-coordinate 
-    int startY;		//starting y-coordinate
-    int diameter;	//asteroid diameter
-    int hVelocity;	//horizontal velocity
-    int vVelocity;	//vertical velocity
 	
-	public Asteroid() {
-	      //assign starting coordinates and diameter
-	    startX = (int)(Math.random()*600) + 1; //starting x-coordinate 
-	    startY = (int)(Math.random()*600) + 1; //starting y-coordinate
-	    diameter = (int)(Math.random() * 100) + 50;   //asteroid diameter
-	    
-	    hVelocity = (int)(Math.random() * 5) + 1; //horizontal velocity
-	    vVelocity = (int)(Math.random() * 5) + 1; //vertical velocity
-	      
-	    
-	    //used randomize starting direction
-	    int hDirection = (int)(Math.random() * 2);
-	    int vDirection = (int)(Math.random() * 2);
-	    	//randomize horizontal direction
-	      	if (hDirection == 1) {
-	      		hVelocity *= (-1);
-	      	}
-	      	//randomize vertical direction
-	      	if (vDirection == 1) {
-	      		vVelocity *= (-1);
-	      	}
+	double x, y; //positional coordinates
+	double asteroidRadius = 30;
+	double angle, rotationalSpeed; //used to rotate the ship
+	double xAcceleration, yAcceleration;  //speed
+	
+	boolean active; //flag to check whether the asteroid is alive
+	
+	//polygon points for drawing the asteroid
+	final double[] startingXPts = {-30,-10,10,30,30,10,-10,-30};
+	final double[] startingYPts = {10,30,30,10,-10,-30,-30,-10};
+	int[] xPts, yPts; //need this to hold int values to be passed to fillPolygon()
+	
+	//constructor statement
+	public Asteroid (double x, double y, double angle, double rotationalSpeed, double xAcceleration, double yAcceleration) {
+		this.x = x;
+		this.y = y;
+		this.angle = angle;
+		this.rotationalSpeed = rotationalSpeed;
+		this.xAcceleration = xAcceleration;
+		this.yAcceleration = yAcceleration;
+		active = true;
+		
+		//set aside space for the coordinate holder arrays
+		xPts = new int[8];
+		yPts = new int[8];
 	}
-
 	
-	public void move() {
-		if( AsteroidsLauncher.B_WIDTH - diameter <= startX || startX <= 0 ) {
-			hVelocity *= -1;
+	public void draw(Graphics g) {
+		if(active) {
+			for(int i=0 ; i<8 ; i++) {
+				xPts[i] = (int)(startingXPts[i] * Math.cos(angle) - startingYPts[i] * Math.sin(angle) + x + 0.5);
+				yPts[i] = (int)(startingXPts[i] * Math.sin(angle) + startingYPts[i] * Math.cos(angle) + y + 0.5);
+			}
+			g.setColor(Color.GRAY);
+			g.drawPolygon(xPts, yPts, 8);
+		}
+	}
+	
+	public void move(int sWidth, int sHeight) {
+		if(active) {
+			angle += rotationalSpeed;
+			x += xAcceleration;
+			y += yAcceleration;
 		}
 		
-		if( 772 - diameter <= startY || startY <= 0) {
-			vVelocity *= -1;
+		if(x<0)
+			x += sWidth;
+		else if(x>sWidth)
+			x -= sWidth;
+		
+		if(y<0) {
+			y += sHeight;
 		}
-		
-		startX += hVelocity;
-		startY += vVelocity;
-		
+		else if(y>sHeight)
+			y -= sHeight;
 	}
 	
-	public int getX() {
-		return startX;
-	}
-	
-	public int getY() {
-		return startY;
-	}
-	
-	public int getDiameter() {
-		return diameter;
-	}
-	
-	public void updateVelocity(double x, double y) {
-		hVelocity = (int) x;
-		vVelocity = (int) y;
-	}
-	
-	public void updatePos (double newX, double newY) {
-		startX = (int) newX;
-		startY = (int) newY;
+	//getters and setters
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 	
 	public Point2D getCenter() {
-		return new Point2D.Double(startX + (diameter/2), startY + (diameter/2));
-	}
-	
-	public Vector2D velVector() {
-		return new Vector2D(this.hVelocity, this.vVelocity);
+		return new Point2D.Double(x, y);
 	}
 	
 	public double getRadius() {
-		return (diameter/2);
+		return asteroidRadius;
 	}
 }
