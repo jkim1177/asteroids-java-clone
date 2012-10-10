@@ -36,23 +36,6 @@ public class SmallAsteroid extends Asteroid {
 		}
 	}
 	
-	public void move(int sWidth, int sHeight) {
-		if(active) {
-			angle += rotationalSpeed;
-			x += xAcceleration;
-			y += yAcceleration;
-		}
-		
-		if(x<0)
-			x += sWidth;
-		else if(x>sWidth)
-			x -= sWidth;
-		
-		if(y<0) {
-			y += sHeight;
-		}
-		else if(y>sHeight)
-			y -= sHeight;
-	}
+
 
 }
