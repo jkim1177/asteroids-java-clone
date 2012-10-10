@@ -50,16 +50,16 @@ public class Asteroid {
 			y += yAcceleration;
 		}
 		
-		if(x<0)
-			x += sWidth;
-		else if(x>sWidth)
-			x -= sWidth;
+		if(x<(0-(asteroidRadius*2)))
+			x += sWidth+(asteroidRadius*2);
+		else if(x>(sWidth+(asteroidRadius*2)))
+			x -= sWidth+(asteroidRadius*2);
 		
-		if(y<0) {
-			y += sHeight;
+		if(y<(0-(asteroidRadius*2))) {
+			y += sHeight+(asteroidRadius*2);
 		}
-		else if(y>sHeight)
-			y -= sHeight;
+		else if(y>(sHeight+(asteroidRadius*2)))
+			y -= sHeight+(asteroidRadius*2);
 	}
 	
 	//getters and setters
