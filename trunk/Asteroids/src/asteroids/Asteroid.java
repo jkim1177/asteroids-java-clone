@@ -5,8 +5,7 @@ import java.awt.geom.Point2D;
 
 public class Asteroid {
 	
-	double x, y; //positional coordinates
-	double asteroidRadius = 30;
+	double x, y, asteroidRadius; //positional coordinates
 	double angle, rotationalSpeed; //used to rotate the ship
 	double xAcceleration, yAcceleration;  //speed
 	
@@ -18,13 +17,14 @@ public class Asteroid {
 	int[] xPts, yPts; //need this to hold int values to be passed to fillPolygon()
 	
 	//constructor statement
-	public Asteroid (double x, double y, double angle, double rotationalSpeed, double xAcceleration, double yAcceleration) {
+	public Asteroid (double x, double y, double angle, double rotationalSpeed, double xAcceleration, double yAcceleration, double asteroidRadius) {
 		this.x = x;
 		this.y = y;
 		this.angle = angle;
 		this.rotationalSpeed = rotationalSpeed;
 		this.xAcceleration = xAcceleration;
 		this.yAcceleration = yAcceleration;
+		this.asteroidRadius = asteroidRadius;
 		active = true;
 		
 		//set aside space for the coordinate holder arrays
@@ -73,5 +73,13 @@ public class Asteroid {
 	
 	public double getRadius() {
 		return asteroidRadius;
+	}
+	
+	public double getX() {
+		return x;
+	}
+	
+	public double getY() {
+		return y;
 	}
 }

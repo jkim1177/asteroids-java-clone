@@ -151,7 +151,7 @@ public class Game extends Applet implements Runnable, KeyListener {
 		      	//randomize vertical direction
 		      	if (yDirection == 1)
 		      		yVelocity *= (-1);
-			asteroids.add(new Asteroid(asteroidX, asteroidY, 0, .1, xVelocity, yVelocity));
+			asteroids.add(new Asteroid(asteroidX, asteroidY, 0, .1, xVelocity, yVelocity, 30));
 		}
 	}
 	
@@ -167,11 +167,41 @@ public class Game extends Applet implements Runnable, KeyListener {
 				
 				double distanceBetween = aCenter.distance(lCenter);
 				if(distanceBetween <= (a.getRadius() + l.getRadius())) {
-					asteroids.remove(i);
-					lasers.remove(j);
+					
+					//split larger asteroids into smaller ones, remove smaller asteroids from screen
+					if(a.getRadius() >= 30) {
+						split(i);
+					} else {
+						asteroids.remove(i);
+					} 
+					
+					lasers.remove(j); //remove laser from screen
 				}
 			}
 		}
+	}
+	
+	public void split(int i) {
+		double bigAsteroidX = asteroids.get(i).getX();
+		double bigAsteroidY = asteroids.get(i).getY();
+		asteroids.remove(i);
+		for(int j = 0 ; j<2 ; j++) {
+			//randomize speed and direction
+			int xVelocity = (int)(Math.random() * 3) + 1; //horizontal velocity
+		    int yVelocity = (int)(Math.random() * 3) + 1; //vertical velocity
+		    //used randomize starting direction
+		    int xDirection = (int)(Math.random() * 2);
+		    int yDirection = (int)(Math.random() * 2);
+		    	//randomize horizontal direction
+		      	if (xDirection == 1)
+		      		xVelocity *= (-1);
+		      	//randomize vertical direction
+		      	if (yDirection == 1)
+		      		yVelocity *= (-1);
+			asteroids.add(new SmallAsteroid(bigAsteroidX, bigAsteroidY, 0, 1, xVelocity, yVelocity, 15));
+		} 
+
+		
 	}
 	
 	
