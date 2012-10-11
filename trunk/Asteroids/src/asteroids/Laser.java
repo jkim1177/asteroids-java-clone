@@ -48,7 +48,7 @@ public class Laser {
 			y += yVelocity;
 		}
 		
-		if(x < 0) {			//wraps the ship around to the opposite side of the screen
+		if(x < 0) {			//wraps the laser around to the opposite side of the screen
 			x += scrnWidth;	//when it goes out of the screen's bounds
 		} else if(x > scrnWidth) {
 			x -= scrnWidth;

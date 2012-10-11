@@ -1,12 +1,14 @@
 package asteroids;
 
 import java.awt.*;
+import java.awt.geom.Point2D;
 
 public class SpaceShip {
 
 	double x, y; //positional coordinates
 	double angle, rotationalSpeed; //used to rotate the ship
 	double acceleration, deceleration, xVelocity, yVelocity, drag; //used for speed and forward motion
+	double radius; //used to check for collisions
 	
 	//flags
 	boolean accelerating, turningLeft, turningRight, decelerating;
@@ -129,6 +131,14 @@ public class SpaceShip {
 	
 	public void setDecelerating(boolean decelerating) {
 		this.decelerating = decelerating;
+	}
+	
+	public Point2D getCenter() {
+		return new Point2D.Double(x, y);
+	}
+	
+	public double getRadius() {
+		return radius;
 	}
 	
 	public double getX() {
