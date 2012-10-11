@@ -24,7 +24,7 @@ public class Game extends Applet implements Runnable, KeyListener {
 	
 	//ArrayList to hold asteroids
 	ArrayList<Asteroid> asteroids = new ArrayList<Asteroid>();
-	int numOfAsteroids = 4;
+	int numOfAsteroids = 1;
 	
 	//ArrayList to hold the lasers
 	ArrayList<Laser> lasers = new ArrayList<Laser>();
@@ -192,7 +192,6 @@ public class Game extends Applet implements Runnable, KeyListener {
 				Point2D asteroidCenter = asteroids.get(i).getCenter();
 				Point2D shipCenter = ship.getCenter();
 				double distanceBetween = asteroidCenter.distance(shipCenter);
-				System.out.println(asteroidCenter + " " + shipCenter + " " + distanceBetween);
 				
 				//if asteroid center is within 80 pixels of ship's center, remove it from the ArrayList and rebuild it
 				if(distanceBetween <= 80) {
@@ -205,11 +204,12 @@ public class Game extends Applet implements Runnable, KeyListener {
 	}
 	
 	public void collisionCheck() {
-		//check for collisions between lasers and asteroids
+		//cycle through active asteroids checking for collisions
 		for(int i = 0 ; i < asteroids.size() ; i++) {
 			Asteroid a = asteroids.get(i);
 			Point2D aCenter = a.getCenter();
 			
+			//check for collisions between lasers and asteroids
 			for(int j = 0 ; j < lasers.size() ; j++) {
 				Laser l = lasers.get(j);
 				Point2D lCenter = l.getCenter();
@@ -230,6 +230,15 @@ public class Game extends Applet implements Runnable, KeyListener {
 					
 					lasers.remove(j); //remove laser from screen
 				}
+			}
+			
+			//check for collisions between ship and asteroid
+			Point2D sCenter = ship.getCenter();
+			double distanceBetween = aCenter.distance(sCenter);
+			if(distanceBetween <= (a.getRadius() + ship.getRadius())) {
+				System.out.println("Ship Collision!");
+				ship.active = false;
+				ship = new SpaceShip(width/2, height/2, 0, .15, .5, .15, .98); //add ship to game
 			}
 		}
 	}

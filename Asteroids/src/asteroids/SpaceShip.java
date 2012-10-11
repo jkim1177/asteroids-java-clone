@@ -8,10 +8,10 @@ public class SpaceShip {
 	double x, y; //positional coordinates
 	double angle, rotationalSpeed; //used to rotate the ship
 	double acceleration, deceleration, xVelocity, yVelocity, drag; //used for speed and forward motion
-	double radius; //used to check for collisions
+	double radius = 12; //used to check for collisions
 	
 	//flags
-	boolean accelerating, turningLeft, turningRight, decelerating;
+	boolean accelerating, turningLeft, turningRight, decelerating, active;
 	
 	//the polygon points for drawing the spaceship
 	final double[] startingXPts = {-15,-10,-15, 15};
@@ -35,6 +35,7 @@ public class SpaceShip {
 		accelerating = false;
 		turningLeft = false;
 		turningRight = false;
+		active = true;
 		
 		//set aside space for the coordinate holder arrays
 		xPts = new int[4];
@@ -46,36 +47,40 @@ public class SpaceShip {
 	}
 	
 	public void draw(Graphics g) {
-		if(accelerating) {
-			for(int i=0 ; i<3 ; i++) {
-				//formula to rotate around a point is -- x = x*cos(angle) - y*sin(angle) -- y = x*sin(angle) + y*cos(angle)
-				//put each point of the main thrusters through this formula
-				mainThrustXPts[i] = (int)(startingMainThrustXPts[i] * Math.cos(angle) - startingMainThrustYPts[i] * Math.sin(angle) + x + 0.5);
-				mainThrustYPts[i] = (int)(startingMainThrustXPts[i] * Math.sin(angle) + startingMainThrustYPts[i] * Math.cos(angle) + y + 0.5);
+		if (active) {
+			if(accelerating) {
+				for(int i=0 ; i<3 ; i++) {
+					//formula to rotate around a point is -- x = x*cos(angle) - y*sin(angle) -- y = x*sin(angle) + y*cos(angle)
+					//put each point of the main thrusters through this formula
+					mainThrustXPts[i] = (int)(startingMainThrustXPts[i] * Math.cos(angle) - startingMainThrustYPts[i] * Math.sin(angle) + x + 0.5);
+					mainThrustYPts[i] = (int)(startingMainThrustXPts[i] * Math.sin(angle) + startingMainThrustYPts[i] * Math.cos(angle) + y + 0.5);
+				}
+				g.setColor(Color.ORANGE);
+				g.fillPolygon(mainThrustXPts, mainThrustYPts, 3);
 			}
-			g.setColor(Color.ORANGE);
-			g.fillPolygon(mainThrustXPts, mainThrustYPts, 3);
-		}
-		
-		if(decelerating) {
-			for(int i=0 ; i<4 ; i++) {
-				//formula to rotate around a point is -- x = x*cos(angle) - y*sin(angle) -- y = x*sin(angle) + y*cos(angle)
-				//put each point of the main thrusters through this formula
-				rearThrustXPts[i] = (int)(startingRearThrustXPts[i] * Math.cos(angle) - startingRearThrustYPts[i] * Math.sin(angle) + x + 0.5);
-				rearThrustYPts[i] = (int)(startingRearThrustXPts[i] * Math.sin(angle) + startingRearThrustYPts[i] * Math.cos(angle) + y + 0.5);
+			
+			if(decelerating) {
+				for(int i=0 ; i<4 ; i++) {
+					//formula to rotate around a point is -- x = x*cos(angle) - y*sin(angle) -- y = x*sin(angle) + y*cos(angle)
+					//put each point of the main thrusters through this formula
+					rearThrustXPts[i] = (int)(startingRearThrustXPts[i] * Math.cos(angle) - startingRearThrustYPts[i] * Math.sin(angle) + x + 0.5);
+					rearThrustYPts[i] = (int)(startingRearThrustXPts[i] * Math.sin(angle) + startingRearThrustYPts[i] * Math.cos(angle) + y + 0.5);
+				}
+				g.setColor(Color.BLUE);
+				g.fillPolygon(rearThrustXPts, rearThrustYPts, 4);
 			}
-			g.setColor(Color.BLUE);
-			g.fillPolygon(rearThrustXPts, rearThrustYPts, 4);
+			
+			for(int i=0 ; i<4 ; i++){
+				//formula to rotate around a point is -- x = x*cos(angle) - y*sin(angle) -- y = x*sin(angle) + y*cos(angle)
+				//put each point of the ship through this formula
+				xPts[i] = (int)(startingXPts[i] * Math.cos(angle) - startingYPts[i] * Math.sin(angle) + x + 0.5);
+				yPts[i] = (int)(startingXPts[i] * Math.sin(angle) + startingYPts[i] * Math.cos(angle) + y + 0.5);
+			}
+			g.setColor(Color.WHITE);
+			g.fillPolygon(xPts, yPts, 4);
+		} else {
+			
 		}
-		
-		for(int i=0 ; i<4 ; i++){
-			//formula to rotate around a point is -- x = x*cos(angle) - y*sin(angle) -- y = x*sin(angle) + y*cos(angle)
-			//put each point of the ship through this formula
-			xPts[i] = (int)(startingXPts[i] * Math.cos(angle) - startingYPts[i] * Math.sin(angle) + x + 0.5);
-			yPts[i] = (int)(startingXPts[i] * Math.sin(angle) + startingYPts[i] * Math.cos(angle) + y + 0.5);
-		}
-		g.setColor(Color.WHITE);
-		g.fillPolygon(xPts, yPts, 4);
 	}
 	
 	public void move(int sWidth, int sHeight) {
@@ -117,6 +122,7 @@ public class SpaceShip {
 	public Laser fire() {
 		return new Laser(x, y, angle, xVelocity, yVelocity, 50);
 	}
+	
 	public void setAccelerating(boolean accelerating) {
 		this.accelerating = accelerating;
 	}
