@@ -17,30 +17,39 @@ public class Game extends Applet implements Runnable, KeyListener {
 	//graphics variables
 	Image img;
 	Dimension dim;
+	int width, height;
 	Graphics g;
 	
 	SpaceShip ship;
+	
+	//ArrayList to hold asteroids
 	ArrayList<Asteroid> asteroids = new ArrayList<Asteroid>();
-	int numOfAsteroids = 8;
+	int numOfAsteroids = 4;
+	
 	//ArrayList to hold the lasers
 	ArrayList<Laser> lasers = new ArrayList<Laser>();
 	final double rateOfFire = 10; //limits rate of fire
-	double rateOfFireRemaining; //decrements rate of fire 
+	double rateOfFireRemaining; //decrements rate of fire
+	
+	//ArrayList to hold explosion particles
+	ArrayList<Explosion> explodingLines = new ArrayList<Explosion>();
+	
+	
 	
 	public void init() {
 		resize(900,700); //set size of the applet
+		dim = getSize(); //get dimension of the applet
+		width = dim.width;
+		height = dim.height;
 		framePeriod = 25; //set refresh rate
 		
 		addKeyListener(this); //to get commands from keyboard
 		setFocusable(true); 
 		
-		ship = new SpaceShip(450, 350, 0, .15, .5, .15, .98); //add ship to game
+		ship = new SpaceShip(width/2, height/2, 0, .15, .5, .15, .98); //add ship to game
 		addAsteroids();
-		
 
-		
-		dim = getSize(); //get dimension of the applet
-		img = createImage(dim.width, dim.height); //create an off-screen image for double-buffering
+		img = createImage(width, height); //create an off-screen image for double-buffering
 		g = img.getGraphics(); //assign the off-screen image
 		thread = new Thread(this);
 		thread.start();
@@ -54,13 +63,17 @@ public class Game extends Applet implements Runnable, KeyListener {
         g2d.setRenderingHints(rh);
         
         g2d.setColor(Color.BLACK);
-        g2d.fillRect(0, 0, 900, 700); //add a black background
+        g2d.fillRect(0, 0, width, height); //add a black background
         for(Asteroid a: asteroids) { //draw asteroids
         	a.draw(g2d);
         }
         
         for(Laser l : lasers) { //draw lasers
         	l.draw(g2d);
+        }
+        
+        for(Explosion e : explodingLines) {
+        	e.draw(g2d);
         }
         
         ship.draw(g2d); //draw ship
@@ -75,21 +88,30 @@ public class Game extends Applet implements Runnable, KeyListener {
 	public void run() {
 		for( ; ; ) {
 			startTime = System.currentTimeMillis(); //timestamp
-			ship.move(dim.width, dim.height);
+			ship.move(width, height);
 			for(Asteroid a : asteroids) {
-				a.move(dim.width, dim.height);
+				a.move(width, height);
 			}
 			for(Laser l : lasers) {
-				l.move(dim.width, dim.height);
+				l.move(width, height);
 			}
 			for(int i = 0 ; i<lasers.size() ; i++) {
 				if(!lasers.get(i).getActive())
 					lasers.remove(i);
 			}
+			for(Explosion e : explodingLines) {
+				e.move();
+			}
+			for(int i = 0 ; i<explodingLines.size(); i++) {
+				if(explodingLines.get(i).getLifeLeft() <= 0)
+					explodingLines.remove(i);
+			}
 			rateOfFireRemaining--;
 			collisionCheck();
-			if(asteroids.size() == 0)
+			if(asteroids.size() == 0) {
+				numOfAsteroids++;
 				addAsteroids();
+			}
 			repaint();
 			try {
 				endTime = System.currentTimeMillis(); //new timestamp
@@ -135,14 +157,18 @@ public class Game extends Applet implements Runnable, KeyListener {
 	}
 	
 	public void addAsteroids() {
+		int numAsteroidsLeft = numOfAsteroids;
+		int size;
+		
 		for(int i=0 ; i<numOfAsteroids ; i++) {		//add asteroids to game
 			//randomize starting position
-			int asteroidX = (int)(Math.random() * 900) + 1;
-			int asteroidY = (int)(Math.random() * 700) + 1;
+			int asteroidX = (int)(Math.random() * width) + 1;
+			int asteroidY = (int)(Math.random() * height) + 1;
+				
 			//randomize speed and direction
-			int xVelocity = (int)(Math.random() * 3) + 1; //horizontal velocity
-		    int yVelocity = (int)(Math.random() * 3) + 1; //vertical velocity
-		    //used randomize starting direction
+			double xVelocity = Math.random() + 1; //horizontal velocity
+		    double yVelocity = Math.random() + 1; //vertical velocity
+		    //used starting direction
 		    int xDirection = (int)(Math.random() * 2);
 		    int yDirection = (int)(Math.random() * 2);
 		    	//randomize horizontal direction
@@ -151,7 +177,30 @@ public class Game extends Applet implements Runnable, KeyListener {
 		      	//randomize vertical direction
 		      	if (yDirection == 1)
 		      		yVelocity *= (-1);
-			asteroids.add(new Asteroid(asteroidX, asteroidY, 0, .1, xVelocity, yVelocity, 30));
+		    
+		    //if there are more then four asteroids, any new ones are MEGA asteroids
+		    if(numAsteroidsLeft > 4) {
+		    	size = 2;
+		    } else { size = 1; 
+		    }
+		    
+			asteroids.add(new Asteroid(size, asteroidX, asteroidY, 0, .1, xVelocity, yVelocity));
+			numAsteroidsLeft--;
+			
+			//Make sure that no asteroids can appear right on top of the ship
+				//get center of recently created asteroid and ship and check the distance between them
+				Point2D asteroidCenter = asteroids.get(i).getCenter();
+				Point2D shipCenter = ship.getCenter();
+				double distanceBetween = asteroidCenter.distance(shipCenter);
+				System.out.println(asteroidCenter + " " + shipCenter + " " + distanceBetween);
+				
+				//if asteroid center is within 80 pixels of ship's center, remove it from the ArrayList and rebuild it
+				if(distanceBetween <= 80) {
+					asteroids.remove(i);
+					i--;
+					numAsteroidsLeft++;
+				}
+			
 		}
 	}
 	
@@ -170,8 +219,12 @@ public class Game extends Applet implements Runnable, KeyListener {
 					
 					//split larger asteroids into smaller ones, remove smaller asteroids from screen
 					if(a.getRadius() >= 30) {
+						for(int k = 0 ; k < 3 ; k++)
+							explodingLines.add(a.explode());
 						split(i);
 					} else {
+						for(int k = 0 ; k < 3 ; k++)
+							explodingLines.add(a.explode());
 						asteroids.remove(i);
 					} 
 					
@@ -182,13 +235,15 @@ public class Game extends Applet implements Runnable, KeyListener {
 	}
 	
 	public void split(int i) {
-		double bigAsteroidX = asteroids.get(i).getX();
-		double bigAsteroidY = asteroids.get(i).getY();
+		Asteroid a = asteroids.get(i);
+		double bigAsteroidX = a.getX();
+		double bigAsteroidY = a.getY();
+		int size = (a.getSize() / 2);
 		asteroids.remove(i);
 		for(int j = 0 ; j<2 ; j++) {
 			//randomize speed and direction
-			int xVelocity = (int)(Math.random() * 3) + 1; //horizontal velocity
-		    int yVelocity = (int)(Math.random() * 3) + 1; //vertical velocity
+			double xVelocity = Math.random() + 1; //horizontal velocity
+		    double yVelocity = Math.random() + 1; //vertical velocity
 		    //used randomize starting direction
 		    int xDirection = (int)(Math.random() * 2);
 		    int yDirection = (int)(Math.random() * 2);
@@ -198,7 +253,7 @@ public class Game extends Applet implements Runnable, KeyListener {
 		      	//randomize vertical direction
 		      	if (yDirection == 1)
 		      		yVelocity *= (-1);
-			asteroids.add(new SmallAsteroid(bigAsteroidX, bigAsteroidY, 0, 1, xVelocity, yVelocity, 15));
+			asteroids.add(new Asteroid(size, bigAsteroidX, bigAsteroidY, 0, .1, xVelocity, yVelocity));
 		} 
 
 		
