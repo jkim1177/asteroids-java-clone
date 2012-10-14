@@ -86,7 +86,7 @@ public class Asteroid {
 	
 	
 	//getters and setters
-	public Explosion explode() {
+	public AsteroidExplosion explode() {
 		double xVel;
 		double yVel;
 			xVel = Math.random();
@@ -97,7 +97,7 @@ public class Asteroid {
 			 		xVel *= -1;
 			 	if(yDir == 1)
 			 		yVel *= -1;
-		return new Explosion(x, y, xVel, yVel, 0, .1);
+		return new AsteroidExplosion(x, y, xVel, yVel, 0, .1);
 	}
 	
 	public void setActive(boolean active) {

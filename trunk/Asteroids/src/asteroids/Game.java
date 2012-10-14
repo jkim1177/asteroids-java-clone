@@ -20,7 +20,11 @@ public class Game extends Applet implements Runnable, KeyListener {
 	int width, height;
 	Graphics g;
 	
+	//text items
+	int level, lives, score;
+	
 	SpaceShip ship;
+	boolean shipCollision, shipExplode;
 	
 	//ArrayList to hold asteroids
 	ArrayList<Asteroid> asteroids = new ArrayList<Asteroid>();
@@ -32,7 +36,10 @@ public class Game extends Applet implements Runnable, KeyListener {
 	double rateOfFireRemaining; //decrements rate of fire
 	
 	//ArrayList to hold explosion particles
-	ArrayList<Explosion> explodingLines = new ArrayList<Explosion>();
+	ArrayList<AsteroidExplosion> explodingLines = new ArrayList<AsteroidExplosion>();
+	
+	//ArrayList to hold ship explosions
+	ArrayList<ShipExplosion> shipExplosion = new ArrayList<ShipExplosion>();
 	
 	
 	
@@ -47,7 +54,12 @@ public class Game extends Applet implements Runnable, KeyListener {
 		setFocusable(true); 
 		
 		ship = new SpaceShip(width/2, height/2, 0, .15, .5, .15, .98); //add ship to game
+		shipCollision = false;
+		shipExplode = false;
+		level = numOfAsteroids;
+		lives = 3;
 		addAsteroids();
+		
 
 		img = createImage(width, height); //create an off-screen image for double-buffering
 		g = img.getGraphics(); //assign the off-screen image
@@ -64,6 +76,15 @@ public class Game extends Applet implements Runnable, KeyListener {
         
         g2d.setColor(Color.BLACK);
         g2d.fillRect(0, 0, width, height); //add a black background
+        
+        //add text for lives, score, and level
+        g2d.setColor(Color.WHITE);
+        g2d.drawString("Level : " + level, 10, 690);
+        g2d.drawString("Lives : " + lives, 110, 690);
+        g2d.drawString("Score : " + score, 210, 690);
+        
+        
+        
         for(Asteroid a: asteroids) { //draw asteroids
         	a.draw(g2d);
         }
@@ -72,11 +93,21 @@ public class Game extends Applet implements Runnable, KeyListener {
         	l.draw(g2d);
         }
         
-        for(Explosion e : explodingLines) {
+        for(AsteroidExplosion e : explodingLines) {
         	e.draw(g2d);
         }
         
+        for(ShipExplosion ex : shipExplosion)
+        	ex.draw(g2d);
+        
         ship.draw(g2d); //draw ship
+        if(shipCollision) {
+        	shipExplosion.add(new ShipExplosion(ship.getX(), ship.getY(), 10, 10));
+			ship.setX(width/2);
+			ship.setY(height/2);
+			shipCollision = false;
+			lives--;
+        }
         
         gfx.drawImage(img, 0, 0, this); //draw the off-screen image (double-buffering) onto the applet
 	}
@@ -88,29 +119,37 @@ public class Game extends Applet implements Runnable, KeyListener {
 	public void run() {
 		for( ; ; ) {
 			startTime = System.currentTimeMillis(); //timestamp
-			ship.move(width, height);
-			for(Asteroid a : asteroids) {
+			ship.move(width, height);			//ship movement
+			for(Asteroid a : asteroids) {		//asteroid movement
 				a.move(width, height);
 			}
-			for(Laser l : lasers) {
+			for(Laser l : lasers) {				//laser movement
 				l.move(width, height);
 			}
-			for(int i = 0 ; i<lasers.size() ; i++) {
+			for(int i = 0 ; i<lasers.size() ; i++) {	//laser removal
 				if(!lasers.get(i).getActive())
 					lasers.remove(i);
 			}
-			for(Explosion e : explodingLines) {
+			for(AsteroidExplosion e : explodingLines) {			//asteroid explosion floating lines movement
 				e.move();
 			}
-			for(int i = 0 ; i<explodingLines.size(); i++) {
+			for(int i = 0 ; i<explodingLines.size(); i++) {		//asteroid explosion floating lines removal
 				if(explodingLines.get(i).getLifeLeft() <= 0)
 					explodingLines.remove(i);
+			}
+			for(ShipExplosion ex : shipExplosion){  //ship explosion expansion
+				ex.expand();
+			}
+			for(int i = 0 ; i<shipExplosion.size() ; i++) {		
+				if(shipExplosion.get(i).getLifeLeft() <= 0)
+					shipExplosion.remove(i);
 			}
 			rateOfFireRemaining--;
 			collisionCheck();
 			if(asteroids.size() == 0) {
 				numOfAsteroids++;
 				addAsteroids();
+				level = numOfAsteroids;
 			}
 			repaint();
 			try {
@@ -218,14 +257,21 @@ public class Game extends Applet implements Runnable, KeyListener {
 				if(distanceBetween <= (a.getRadius() + l.getRadius())) {
 					
 					//split larger asteroids into smaller ones, remove smaller asteroids from screen
-					if(a.getRadius() >= 30) {
+					if(a.getRadius() >= 60) {
 						for(int k = 0 ; k < 3 ; k++)
 							explodingLines.add(a.explode());
 						split(i);
+						score += 200;
+					} else if(a.getRadius() >= 30){
+						for(int k = 0 ; k < 3 ; k++)
+							explodingLines.add(a.explode());
+						split(i);
+						score += 100;
 					} else {
 						for(int k = 0 ; k < 3 ; k++)
 							explodingLines.add(a.explode());
 						asteroids.remove(i);
+						score += 50;
 					} 
 					
 					lasers.remove(j); //remove laser from screen
@@ -236,9 +282,8 @@ public class Game extends Applet implements Runnable, KeyListener {
 			Point2D sCenter = ship.getCenter();
 			double distanceBetween = aCenter.distance(sCenter);
 			if(distanceBetween <= (a.getRadius() + ship.getRadius())) {
-				System.out.println("Ship Collision!");
-				ship.active = false;
-				ship = new SpaceShip(width/2, height/2, 0, .15, .5, .15, .98); //add ship to game
+				shipCollision = true;
+				shipExplode = true;
 			}
 		}
 	}

@@ -2,7 +2,7 @@ package asteroids;
 
 import java.awt.*;
 
-public class Explosion {
+public class AsteroidExplosion {
 	
 	double lifeLeft = 150;
 	
@@ -13,7 +13,7 @@ public class Explosion {
 	final double startingYPts[] = {-5, 5};
 	int[] xPts, yPts;
 	
-	public Explosion(double x, double y, double xVelocity, double yVelocity, double angle, double rotationalSpeed) {
+	public AsteroidExplosion(double x, double y, double xVelocity, double yVelocity, double angle, double rotationalSpeed) {
 		this.x = x;
 		this.y = y;
 		this.xVelocity = xVelocity;
