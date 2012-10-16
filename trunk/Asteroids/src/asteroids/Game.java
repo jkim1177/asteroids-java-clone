@@ -89,7 +89,7 @@ public class Game extends Applet implements Runnable, KeyListener {
         g2d.drawString("Score : " + score, 210, 690);
         
         if(isImmortal && !gameOver) {
-        	g2d.setColor(Color.GRAY);
+        	g2d.setColor(Color.GREEN);
         	g2d.drawString("Your are IMMORTAL!!! (Warning: Firing you laser will make you mortal, and potentially dead)", 215, 25);
         }
         
