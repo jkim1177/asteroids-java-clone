@@ -24,11 +24,11 @@ public class Game extends Applet implements Runnable, KeyListener {
 	int level, lives, score;
 	
 	SpaceShip ship;
-	boolean shipCollision, shipExplode;
+	boolean shipCollision, shipExplode, isImmortal;
 	
 	//ArrayList to hold asteroids
 	ArrayList<Asteroid> asteroids = new ArrayList<Asteroid>();
-	int numOfAsteroids = 1;
+	int numOfAsteroids = 20;
 	
 	//ArrayList to hold the lasers
 	ArrayList<Laser> lasers = new ArrayList<Laser>();
@@ -56,6 +56,7 @@ public class Game extends Applet implements Runnable, KeyListener {
 		ship = new SpaceShip(width/2, height/2, 0, .15, .5, .15, .98); //add ship to game
 		shipCollision = false;
 		shipExplode = false;
+		isImmortal = true;
 		level = numOfAsteroids;
 		lives = 3;
 		addAsteroids();
@@ -83,6 +84,11 @@ public class Game extends Applet implements Runnable, KeyListener {
         g2d.drawString("Lives : " + lives, 110, 690);
         g2d.drawString("Score : " + score, 210, 690);
         
+        if(isImmortal) {
+        	g2d.setColor(Color.RED);
+        	g2d.drawString("Your are IMMORTAL!!! (Warning: Firing you laser will make you mortal, and potentially dead)", 215, 25);
+        }
+        
         
         
         for(Asteroid a: asteroids) { //draw asteroids
@@ -100,12 +106,15 @@ public class Game extends Applet implements Runnable, KeyListener {
         for(ShipExplosion ex : shipExplosion)
         	ex.draw(g2d);
         
-        ship.draw(g2d); //draw ship
+        ship.draw(g2d, isImmortal); //draw ship
+        
         if(shipCollision) {
         	shipExplosion.add(new ShipExplosion(ship.getX(), ship.getY(), 10, 10));
 			ship.setX(width/2);
 			ship.setY(height/2);
+			ship.setVelocity(0);
 			shipCollision = false;
+			isImmortal = true;
 			lives--;
         }
         
@@ -167,6 +176,8 @@ public class Game extends Applet implements Runnable, KeyListener {
 			if(rateOfFireRemaining <= 0 ) {
 				lasers.add(ship.fire());
 				rateOfFireRemaining = rateOfFire;
+				if(isImmortal)
+					isImmortal = false;
 			}
 		}
 		if(key == KeyEvent.VK_UP) 
@@ -258,18 +269,15 @@ public class Game extends Applet implements Runnable, KeyListener {
 					
 					//split larger asteroids into smaller ones, remove smaller asteroids from screen
 					if(a.getRadius() >= 60) {
-						for(int k = 0 ; k < 3 ; k++)
-							explodingLines.add(a.explode());
+						asteroidExplode(i);
 						split(i);
 						score += 200;
 					} else if(a.getRadius() >= 30){
-						for(int k = 0 ; k < 3 ; k++)
-							explodingLines.add(a.explode());
+						asteroidExplode(i);
 						split(i);
 						score += 100;
 					} else {
-						for(int k = 0 ; k < 3 ; k++)
-							explodingLines.add(a.explode());
+						asteroidExplode(i);
 						asteroids.remove(i);
 						score += 50;
 					} 
@@ -282,8 +290,20 @@ public class Game extends Applet implements Runnable, KeyListener {
 			Point2D sCenter = ship.getCenter();
 			double distanceBetween = aCenter.distance(sCenter);
 			if(distanceBetween <= (a.getRadius() + ship.getRadius())) {
-				shipCollision = true;
-				shipExplode = true;
+				
+				//Only do the following if not immortal
+				if(!isImmortal) {
+					shipCollision = true;
+					shipExplode = true;
+				
+					if(a.getRadius() >= 30) {
+						asteroidExplode(i);
+						split(i);
+					} else {
+						asteroidExplode(i);
+						asteroids.remove(i);
+					}
+				}
 			}
 		}
 	}
@@ -308,9 +328,12 @@ public class Game extends Applet implements Runnable, KeyListener {
 		      	if (yDirection == 1)
 		      		yVelocity *= (-1);
 			asteroids.add(new Asteroid(size, bigAsteroidX, bigAsteroidY, 0, .1, xVelocity, yVelocity));
-		} 
-
-		
+		} 	
+	}
+	
+	public void asteroidExplode(int i) {
+		for(int k = 0 ; k < 3 ; k++)
+			explodingLines.add(asteroids.get(i).explode());
 	}
 	
 	
