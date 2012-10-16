@@ -45,7 +45,7 @@ public class SpaceShip {
 		rearThrustYPts = new int[4];
 	}
 	
-	public void draw(Graphics g) {
+	public void draw(Graphics g, boolean isImmortal) {
 		if(accelerating) {
 			for(int i=0 ; i<3 ; i++) {
 				//formula to rotate around a point is -- x = x*cos(angle) - y*sin(angle) -- y = x*sin(angle) + y*cos(angle)
@@ -74,7 +74,12 @@ public class SpaceShip {
 			xPts[i] = (int)(startingXPts[i] * Math.cos(angle) - startingYPts[i] * Math.sin(angle) + x + 0.5);
 			yPts[i] = (int)(startingXPts[i] * Math.sin(angle) + startingYPts[i] * Math.cos(angle) + y + 0.5);
 		}
-		g.setColor(Color.WHITE);
+		//set a different color depending on if the ship is currently immortal or not
+		if(isImmortal)
+			g.setColor(new Color(115, 74, 18));
+		else
+			g.setColor(Color.WHITE);
+		//draw ship
 		g.fillPolygon(xPts, yPts, 4);
 	}
 	
@@ -155,5 +160,10 @@ public class SpaceShip {
 	
 	public void setY(int y) {
 		this.y = y;
+	}
+	
+	public void setVelocity(double v) {
+		xVelocity = v;
+		yVelocity = v;
 	}
 }
