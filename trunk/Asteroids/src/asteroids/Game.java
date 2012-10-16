@@ -28,7 +28,7 @@ public class Game extends Applet implements Runnable, KeyListener {
 	
 	//ArrayList to hold asteroids
 	ArrayList<Asteroid> asteroids = new ArrayList<Asteroid>();
-	int numOfAsteroids = 20;
+	int numOfAsteroids = 2;
 	
 	//ArrayList to hold the lasers
 	ArrayList<Laser> lasers = new ArrayList<Laser>();
@@ -41,6 +41,8 @@ public class Game extends Applet implements Runnable, KeyListener {
 	//ArrayList to hold ship explosions
 	ArrayList<ShipExplosion> shipExplosion = new ArrayList<ShipExplosion>();
 	
+	//GAME OVER!!!!
+	boolean gameOver;
 	
 	
 	public void init() {
@@ -49,6 +51,8 @@ public class Game extends Applet implements Runnable, KeyListener {
 		width = dim.width;
 		height = dim.height;
 		framePeriod = 25; //set refresh rate
+		
+		gameOver = false;
 		
 		addKeyListener(this); //to get commands from keyboard
 		setFocusable(true); 
@@ -84,12 +88,10 @@ public class Game extends Applet implements Runnable, KeyListener {
         g2d.drawString("Lives : " + lives, 110, 690);
         g2d.drawString("Score : " + score, 210, 690);
         
-        if(isImmortal) {
-        	g2d.setColor(Color.RED);
+        if(isImmortal && !gameOver) {
+        	g2d.setColor(Color.GRAY);
         	g2d.drawString("Your are IMMORTAL!!! (Warning: Firing you laser will make you mortal, and potentially dead)", 215, 25);
         }
-        
-        
         
         for(Asteroid a: asteroids) { //draw asteroids
         	a.draw(g2d);
@@ -113,9 +115,18 @@ public class Game extends Applet implements Runnable, KeyListener {
 			ship.setX(width/2);
 			ship.setY(height/2);
 			ship.setVelocity(0);
+			ship.setAngle(0);
 			shipCollision = false;
 			isImmortal = true;
 			lives--;
+        }
+        
+        if(lives == 0) gameOver = true;
+        if(gameOver) {
+        	g2d.setColor(Color.RED);
+        	g2d.setFont(new Font("Arial", Font.BOLD, 40));
+        	g2d.drawString("GAME OVER!!!", 320, 395);
+        	g2d.setFont(new Font("Arial", Font.PLAIN, 12));
         }
         
         gfx.drawImage(img, 0, 0, this); //draw the off-screen image (double-buffering) onto the applet
@@ -170,24 +181,26 @@ public class Game extends Applet implements Runnable, KeyListener {
 	}
 	
 	public void keyPressed(KeyEvent e) {
-		int key = e.getKeyCode();
-		//fires laser
-		if(key == KeyEvent.VK_SPACE) {
-			if(rateOfFireRemaining <= 0 ) {
-				lasers.add(ship.fire());
-				rateOfFireRemaining = rateOfFire;
-				if(isImmortal)
-					isImmortal = false;
+		if(!gameOver) {
+			int key = e.getKeyCode();
+			//fires laser
+			if(key == KeyEvent.VK_SPACE) {
+				if(rateOfFireRemaining <= 0 ) {
+					lasers.add(ship.fire());
+					rateOfFireRemaining = rateOfFire;
+					if(isImmortal)
+						isImmortal = false;
+				}
 			}
+			if(key == KeyEvent.VK_UP) 
+				ship.setAccelerating(true);
+			if(key == KeyEvent.VK_RIGHT)
+				ship.setTurningRight(true);
+			if(key == KeyEvent.VK_LEFT)
+				ship.setTurningLeft(true);
+			if(key == KeyEvent.VK_DOWN)
+				ship.setDecelerating(true);
 		}
-		if(key == KeyEvent.VK_UP) 
-			ship.setAccelerating(true);
-		if(key == KeyEvent.VK_RIGHT)
-			ship.setTurningRight(true);
-		if(key == KeyEvent.VK_LEFT)
-			ship.setTurningLeft(true);
-		if(key == KeyEvent.VK_DOWN)
-			ship.setDecelerating(true);
 	}
 	
 	public void keyReleased(KeyEvent e) {

@@ -166,4 +166,8 @@ public class SpaceShip {
 		xVelocity = v;
 		yVelocity = v;
 	}
+	
+	public void setAngle(double angle) {
+		this.angle = angle;
+	}
 }
